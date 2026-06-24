@@ -1,5 +1,5 @@
 # 💫 About Me:
-### Hi there 👋<br><br>I'm Sasitha, a passionate Android Developer, Software Engineer,  NextJS Developer with a love for creating intuitive and efficient software solutions. My current focus is on  Android development using Jetpack Compose and Kotlin.<br><br>- 🔭 I’m currently working on a Hospital Management System<br>- 🌱 I’m learning Kotlin, PHP and Flutter.<br>- 👯 I’m looking to collaborate on React Projects.<br>- 📫 How to reach me: sasitharuween@gmail.com,<br><br><br>Feel free to explore my repositories and get in touch if you'd like to collaborate!<br><br>
+### Hi there 👋<br><br>I'm Sasitha, a passionate Android Developer, Software Engineer,  NextJS Developer with a love for creating intuitive and efficient software solutions. My current focus is on  Android development using Jetpack Compose and Kotlin.<br><br>- 🔭 I’m currently working on an ERP Solution Platform <br>-.<br>- 📫 How to reach me: sasitharuween@gmail.com,<br><br><br>Feel free to explore my repositories and get in touch if you'd like to collaborate!<br><br>
 
 
 ## 🌐 Socials:
