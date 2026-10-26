@@ -50,10 +50,10 @@
 
 ---
 
-## 📈 Contribution Graph
+## 📈 Contribution Calendar
 
 <div align="center">
-  <img src="https://github-readme-activity-graph.vercel.app/graph?username=Sasitha-Ruvin&theme=tokyo-night&hide_border=true&area=true" alt="activity graph" width="100%" />
+  <img src="https://ghchart.rshah.org/36BCF7/Sasitha-Ruvin" alt="contribution calendar" width="100%" />
 </div>
 
 ---
@@ -69,9 +69,9 @@
 ## 🤝 Let's Connect
 
 <div align="center">
-  <a href="https://linkedin.com/in/YOUR_LINKEDIN"><img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white" /></a>
-  <a href="mailto:YOUR_EMAIL"><img src="https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white" /></a>
-  <a href="https://YOUR_WEBSITE"><img src="https://img.shields.io/badge/Portfolio-000000?style=for-the-badge&logo=vercel&logoColor=white" /></a>
+  <a href="https://www.linkedin.com/in/sasitha-ruween-1752502b3"><img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white" /></a>
+  <a href="mailto:sasitharuween@gmail.com"><img src="https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white" /></a>
+  <a href="https://sasitha-ruween.vercel.app"><img src="https://img.shields.io/badge/Portfolio-000000?style=for-the-badge&logo=vercel&logoColor=white" /></a>
 </div>
 
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0f2027,50:203a43,100:2c5364&height=100&section=footer" width="100%" />
