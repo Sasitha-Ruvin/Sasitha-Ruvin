@@ -50,21 +50,12 @@
 
 ---
 
-## 📈 Contribution Calendar
+## 📊 Profile Summary
 
 <div align="center">
-  <img src="https://ghchart.rshah.org/36BCF7/Sasitha-Ruvin" alt="contribution calendar" width="100%" />
+  <img src="https://raw.githubusercontent.com/Sasitha-Ruvin/Sasitha-Ruvin/main/profile-summary-card-output/tokyonight/3-stats.svg" width="49%" />
+  <img src="https://raw.githubusercontent.com/Sasitha-Ruvin/Sasitha-Ruvin/main/profile-summary-card-output/tokyonight/2-most-commit-language.svg" width="49%" />
 </div>
-
----
-
-## 🏆 Trophies
-
-<div align="center">
-  <img src="https://github-profile-trophy.vercel.app/?username=Sasitha-Ruvin&theme=tokyonight&no-frame=true&no-bg=true&row=1&column=7" alt="trophies" />
-</div>
-
----
 
 ## 🤝 Let's Connect
 
