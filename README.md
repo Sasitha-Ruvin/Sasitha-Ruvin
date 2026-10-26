@@ -49,12 +49,11 @@
 </div>
 
 ---
-
 ## 📊 Profile Summary
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/Sasitha-Ruvin/Sasitha-Ruvin/main/profile-summary-card-output/tokyonight/3-stats.svg" width="49%" />
-  <img src="https://raw.githubusercontent.com/Sasitha-Ruvin/Sasitha-Ruvin/main/profile-summary-card-output/tokyonight/2-most-commit-language.svg" width="49%" />
+  <img src="./profile-summary-card-output/tokyonight/3-stats.svg" width="49%" />
+  <img src="./profile-summary-card-output/tokyonight/2-most-commit-language.svg" width="49%" />
 </div>
 
 ## 🤝 Let's Connect
