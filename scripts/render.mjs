@@ -7,6 +7,8 @@ const T = {
   light: { ink: '#1f2328', sub: '#59636e', line: '#d1d9e0', card: '#f6f8fa', ramp: ['#e6eaef', '#b7d3f6', '#6da7ec', '#2a78d6', '#184f95'], s: ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#6250d6'], other: '#8c959f' },
   dark: { ink: '#f0f6fc', sub: '#9198a1', line: '#3d444d', card: '#151b23', ramp: ['#21262d', '#184f95', '#2a78d6', '#6da7ec', '#b7d3f6'], s: ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#0ca30c', '#9085e9'], other: '#7d8590' },
 };
+const FLAME = 'M32 2C36 18 58 28 58 52C58 68 46 78 32 78C18 78 6 68 6 52C6 40 14 34 18 24C20 32 24 36 28 36C34 28 30 14 32 2Z';
+const CORE = 'M32 44C35 51 44 55 44 64C44 72 39 77 32 77C25 77 20 72 20 64C20 56 29 52 32 44Z';
 const W = 860, fmt = n => n.toLocaleString('en-US');
 const pct = p => p < 1 ? '&lt;1%' : `${Math.round(p)}%`;
 const date = d => new Date(d + 'T00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
@@ -35,13 +37,33 @@ ${card ? `<rect x=".5" y=".5" width="${W - 1}" height="${h - 1}" rx="14" fill="$
 <rect x="2" y="98" width="72" height="5" rx="2.5" fill="${t.s[0]}" class="rt"/>
 <text x="1" y="140" font-size="23">Software engineer. Go, TypeScript and the systems around them.</text><text x="1" y="167" class="s">Colombo, Sri Lanka</text>`, false),
     overview: t => {
+      const st = d.streak, short = x => date(x).replace(/, \d+$/, '');
+      const flame = (lit, delay = 0) => lit
+        ? `<g class="fl" style="animation-delay:-${delay}s"><path d="${FLAME}" fill="#f0441e"/><g class="fl2" style="animation-delay:-${delay + .4}s"><path d="${FLAME}" transform="translate(9.6 23.4) scale(.7)" fill="#ff8a1f"/></g><g class="fl3" style="animation-delay:-${delay + .2}s"><path d="${CORE}" fill="#ffd75e"/></g></g>`
+        : `<path d="${FLAME}" fill="${t.line}"/>`;
+      const embers = [[18, 0], [30, .7], [42, 1.3], [24, 1.9], [38, 2.4]].map(([x, w]) => `<circle class="em" cx="${x}" cy="26" r="2.4" fill="#ff8a1f" style="animation-delay:${w}s"/>`).join('');
+      const bolt = `<path class="bo" d="M38 4 10 46h18l-6 30 32-44H34z" fill="#f5b301"/>`;
+      const col = (i, icon, label, n, unit, sub) => { const x = 28 + i * 275; return `<g transform="translate(${x} 40) scale(.94)"><g class="in" style="animation-delay:${i * .15}s">${icon}</g></g>
+<g class="in" style="animation-delay:${.15 + i * .15}s"><text x="${x + 76}" y="46" class="s">${label}</text><text x="${x + 76}" y="96" font-size="54" font-weight="700" style="letter-spacing:-2px">${fmt(n)}<tspan font-size="16" font-weight="400" dx="8" style="letter-spacing:0;fill:${t.sub}">${unit}</tspan></text><text x="${x + 76}" y="122" class="s">${sub}</text></g>`; };
+      const days = n => n === 1 ? 'day' : 'days';
+      const counts = d.calendar.counts, end = Date.parse(d.updated + 'T00:00Z');
+      const week = Array.from({ length: 7 }, (_, i) => {
+        const v = counts[counts.length - 7 + i] ?? 0, x = 196 + i * 92;
+        const name = new Date(end - (6 - i) * 864e5).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
+        return `<g class="in" style="animation-delay:${(.5 + i * .12).toFixed(2)}s"><g transform="translate(${x} 158) scale(.5)">${flame(v > 0, i * .23)}</g><text x="${x + 42}" y="178" font-size="16" font-weight="600">${name}</text><text x="${x + 42}" y="197" class="s">${v}</text></g>`;
+      }).join('');
       const tiles = [[d.contributions, 'contributions'], [d.commits, 'commits'], [d.prs, 'pull requests'], [d.repos.public + d.repos.private + d.repos.org, 'repositories'], [d.activeDays, 'active days']];
-      const st = d.streak;
-      const streaks = [[st.current, 'Current streak', st.current ? `since ${date(st.from)}` : 'starts with the next commit'], [st.longest.n, 'Longest streak', st.longest.n ? `${date(st.longest.from)} to ${date(st.longest.to)}` : ''], [d.best.n, 'Best day', date(d.best.date)]];
-      return wrap(252, `Current streak ${st.current} days, longest ${st.longest.n} days, ${fmt(d.contributions)} contributions`, t,
-        streaks.map(([n, l, s], i) => `<g class="in" style="animation-delay:${i * .12}s"><text x="${28 + i * 275}" y="38" class="s">${l}</text><text x="${28 + i * 275}" y="92" font-size="54" font-weight="700" style="letter-spacing:-2px">${fmt(n)}<tspan font-size="18" font-weight="400" dx="8" style="letter-spacing:0;fill:${t.sub}">${i < 2 ? (n === 1 ? 'day' : 'days') : 'contributions'}</tspan></text><text x="${28 + i * 275}" y="120" class="s">${s}</text></g>`).join('') +
-        `<rect x="28" y="144" width="${W - 56}" height="1" fill="${t.line}"/>` +
-        tiles.map(([n, l], i) => `<g class="in" style="animation-delay:${.3 + i * .08}s"><text x="${28 + i * 165}" y="200" font-size="32" font-weight="650">${fmt(n)}</text><text x="${28 + i * 165}" y="226" class="s">${l}</text></g>`).join(''));
+      const anim = `<style>.fl,.fl2,.fl3{transform-box:fill-box;transform-origin:50% 100%}.fl{animation:fl 1.5s ease-in-out infinite}.fl2{animation:fl2 1.1s ease-in-out infinite}.fl3{animation:fl2 .8s ease-in-out infinite}.em{opacity:0;animation:em 3s ease-out infinite}.bo{transform-box:fill-box;transform-origin:center;animation:bo 2.6s ease-in-out infinite}
+@keyframes fl{0%,100%{transform:scale(1) skewX(0)}25%{transform:scale(.96,1.05) skewX(-3deg)}50%{transform:scale(1.03,.96) skewX(2deg)}75%{transform:scale(.97,1.06) skewX(3deg)}}
+@keyframes fl2{0%,100%{transform:scale(1)}40%{transform:scale(.9,1.1) skewX(4deg)}70%{transform:scale(1.06,.92) skewX(-4deg)}}
+@keyframes em{0%{transform:translate(0,0);opacity:0}15%{opacity:1}100%{transform:translate(8px,-48px) scale(.2);opacity:0}}
+@keyframes bo{0%,82%,100%{transform:scale(1);opacity:1}86%{transform:scale(1.14);opacity:.55}90%{transform:scale(1.05);opacity:1}94%{transform:scale(1.14);opacity:.7}}</style>`;
+      return wrap(330, `Current streak ${st.current} ${days(st.current)}, longest ${st.longest.n} days, ${fmt(d.contributions)} contributions`, t, anim +
+        col(0, (st.current ? embers : '') + flame(st.current > 0), 'Current streak', st.current, days(st.current), st.current ? `since ${short(st.from)}` : 'commit to light it') +
+        col(1, flame(st.longest.n > 0, .6), 'Longest streak', st.longest.n, days(st.longest.n), st.longest.n ? `${short(st.longest.from)} to ${date(st.longest.to)}` : '') +
+        col(2, bolt, 'Best day', d.best.n, 'contributions', date(d.best.date)) +
+        `<rect x="28" y="142" width="${W - 56}" height="1" fill="${t.line}"/><text x="28" y="186" font-size="16" font-weight="600">Last 7 days</text>${week}<rect x="28" y="214" width="${W - 56}" height="1" fill="${t.line}"/>` +
+        tiles.map(([n, l], i) => `<g class="in" style="animation-delay:${.6 + i * .08}s"><text x="${28 + i * 165}" y="270" font-size="32" font-weight="650">${fmt(n)}</text><text x="${28 + i * 165}" y="296" class="s">${l}</text></g>`).join(''));
     },
     calendar: t => {
       const n = d.calendar.counts, from = Date.parse(d.calendar.from + 'T00:00Z');

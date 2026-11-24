@@ -31,8 +31,6 @@ I build ERP and CRM systems, client websites and AI-powered automation, and I wr
   <img src="assets/months-light.svg" alt="Commits per month by language" width="100%">
 </picture></a>
 
-<sub>Each commit is split across its repository's languages, on every branch. Private work is included as totals only.</sub>
-
 ## Stack
 
 | | |
