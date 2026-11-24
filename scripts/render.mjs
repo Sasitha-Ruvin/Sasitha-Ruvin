@@ -79,21 +79,32 @@ ${lit ? embers : ''}
       `.up{transform-box:fill-box;transform-origin:50% 100%;animation:up .8s cubic-bezier(.2,.8,.2,1) backwards}@keyframes up{from{transform:scaleY(0);opacity:0}}`);
   }
 
-  function donuts(t) {
-    const R = 78, C = 2 * Math.PI * R;
-    const body = [['Public', 'public'], ['Private', 'private'], ['Organizations', 'org']].map(([title, g], n) => {
-      const cx = 150 + n * 280, sum = {}; let commits = 0;
-      for (const m of Object.values(d.months)) { const c = m[g]; if (!c) continue; commits += c.commits; for (const [l, v] of Object.entries(c.langs)) sum[l] = (sum[l] ?? 0) + v; }
-      const all = Object.values(sum).reduce((p, q) => p + q, 0) || 1;
-      const ranked = Object.entries(sum).filter(([l]) => LANGS.includes(l)).sort((p, q) => q[1] - p[1]).slice(0, 3);
-      const rest = all - ranked.reduce((s, r) => s + r[1], 0);
-      const rows = [...ranked, ...(rest / all > .004 ? [['Other', rest]] : [])].map(([l, v]) => ({ l, p: v / all, c: t.s[LANGS.indexOf(l)] ?? t.other }));
-      let at = 0;
-      const arcs = rows.map((r, i) => { const len = Math.max(1.5, r.p * C - 3); const s = `<circle class="do" cx="${cx}" cy="178" r="${R}" fill="none" stroke="${r.c}" stroke-width="30" stroke-dasharray="${f1(len)} ${f1(C)}" transform="rotate(${f1(at * 360 - 90)} ${cx} 178)" style="animation-delay:${(n * .15 + i * .12).toFixed(2)}s"/>`; at += r.p; return s; }).join('');
-      const legend = rows.map((r, i) => `<circle cx="${cx - 78}" cy="${303 + i * 29}" r="6" fill="${r.c}"/><text x="${cx - 62}" y="${308 + i * 29}" font-size="16">${r.l}</text><text x="${cx + 84}" y="${308 + i * 29}" class="s" text-anchor="end">${r.p < .01 ? '&lt;1' : Math.round(r.p * 100)}%</text>`).join('');
-      return `<text x="${cx}" y="54" class="h" text-anchor="middle">${title}</text>${arcs}<text x="${cx}" y="184" font-size="28" font-weight="650" text-anchor="middle">${fmt(commits)}</text><text x="${cx}" y="206" class="s" text-anchor="middle">commits</text>${legend}`;
+  function languages(t) {
+    const sum = {}, last = {}, where = { public: 0, private: 0, org: 0 }, keys = Object.keys(d.months).sort();
+    const recent = Array.from({ length: 12 }, (_, i) => { const e = new Date(end); return new Date(Date.UTC(e.getUTCFullYear(), e.getUTCMonth() - 11 + i, 1)).toISOString().slice(0, 7); });
+    const inMonth = (k, l) => GROUPS.reduce((n, g) => n + (d.months[k]?.[g]?.langs[l] ?? 0), 0);
+    for (const k of keys) for (const g of GROUPS) {
+      const c = d.months[k][g]; if (!c) continue;
+      where[g] += c.commits;
+      for (const [l, v] of Object.entries(c.langs)) { sum[l] = (sum[l] ?? 0) + v; if (v >= .05) last[l] = k; }
+    }
+    const all = Object.values(sum).reduce((p, q) => p + q, 0) || 1, ranked = Object.entries(sum).sort((p, q) => q[1] - p[1]);
+    const color = l => t.s[LANGS.indexOf(l)] ?? t.other, pct = v => v / all < .01 ? '&lt;1%' : `${Math.round(v / all * 100)}%`;
+    const R = 112, C = 2 * Math.PI * R, cx = 172, cy = 240;
+    const main = ranked.filter(([l]) => LANGS.includes(l)), rest = all - main.reduce((n, r) => n + r[1], 0);
+    let at = 0;
+    const arcs = [...main, ['Other', rest]].map(([l, v], i) => { const p = v / all, s = `<circle class="do" cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${color(l)}" stroke-width="40" stroke-dasharray="${f1(Math.max(2, p * C - 3))} ${f1(C)}" transform="rotate(${f1(at * 360 - 90)} ${cx} ${cy})" style="animation-delay:${f1(i * .15)}s"/>`; at += p; return s; }).join('');
+    const rows = ranked.slice(0, 8).map(([l, v], i) => {
+      const y = 94 + i * 44, vals = recent.map(k => inMonth(k, l)).map(n => n < .05 ? 0 : n), m = Math.max(...vals);
+      const spark = vals.map((n, k) => `<rect x="${564 + k * 12}" y="${f1(y + 5 - (m ? Math.max(2, n / m * 24) : 2))}" width="9" height="${f1(m ? Math.max(2, n / m * 24) : 2)}" rx="2" fill="${n ? color(l) : t.line}" class="gr" style="animation-delay:${(i * .05 + k * .03).toFixed(2)}s"/>`).join('');
+      return `<circle cx="352" cy="${y - 5}" r="7" fill="${color(l)}"/><text x="370" y="${y}" font-size="17">${l === 'PLpgSQL' ? 'SQL' : l}</text><text x="532" y="${y}" font-size="17" font-weight="600" text-anchor="end">${pct(v)}</text>${spark}<text x="824" y="${y}" class="s" text-anchor="end">${last[l] ? utc(last[l] + '-01', { month: 'short', year: 'numeric' }) : ''}</text>`;
     }).join('');
-    return wrap(426, 'Languages in public, private and organization repositories', t, body, `.do{animation:do 1.2s cubic-bezier(.2,.7,.2,1) backwards}@keyframes do{from{stroke-dasharray:0 ${f1(C)}}}`);
+    const total = where.public + where.private + where.org || 1, fills = [t.towers[1][0], t.sun, t.towers[3][0]];
+    let x = 36;
+    const split = [['Public', where.public], ['Private', where.private], ['Organizations', where.org]].map(([n, v], i) => { const w = v / total * 788, s = `<rect x="${f1(x)}" y="456" width="${f1(Math.max(2, w - 3))}" height="22" rx="5" fill="${fills[i]}" class="rt"/><text x="${f1(x)}" y="504" font-size="16">${n} <tspan style="fill:${t.sub}">${fmt(v)} commits</tspan></text>`; x += w; return s; }).join('');
+    return wrap(536, 'Languages: ' + ranked.slice(0, 8).map(([l, v]) => `${l} ${pct(v)}`).join(', '), t, `<text x="36" y="48" class="h">Languages</text><text x="532" y="48" class="s" text-anchor="end">Share</text><text x="564" y="48" class="s">Last 12 months</text><text x="824" y="48" class="s" text-anchor="end">Last used</text>
+${arcs}<text x="${cx}" y="${cy + 6}" font-size="38" font-weight="650" text-anchor="middle" style="letter-spacing:-1px">${fmt(d.commits)}</text><text x="${cx}" y="${cy + 30}" class="s" text-anchor="middle">commits</text>${rows}${split}`,
+      `.do{animation:do 1.2s cubic-bezier(.2,.7,.2,1) backwards}@keyframes do{from{stroke-dasharray:0 ${f1(C)}}}.gr{transform-box:fill-box;transform-origin:50% 100%;animation:gr .7s backwards}@keyframes gr{from{transform:scaleY(0)}}.rt{transform-box:fill-box;transform-origin:0 50%;animation:rt .9s backwards}@keyframes rt{from{transform:scaleX(0)}}`);
   }
 
   function rhythm(t) {
@@ -114,5 +125,5 @@ ${lit ? embers : ''}
       `.gr{transform-box:fill-box;transform-origin:50% 100%;animation:gr .9s cubic-bezier(.2,.8,.2,1) backwards}@keyframes gr{from{transform:scaleY(0)}}.ln{stroke-dasharray:1;animation:ln 2s ease-out backwards}@keyframes ln{from{stroke-dashoffset:1}}`);
   }
 
-  for (const [mode, t] of Object.entries(T)) for (const [n, fn] of Object.entries({ streak, skyline, donuts, rhythm })) writeFileSync(`${out}${n}-${mode}.svg`, fn(t));
+  for (const [mode, t] of Object.entries(T)) for (const [n, fn] of Object.entries({ streak, skyline, languages, rhythm })) writeFileSync(`${out}${n}-${mode}.svg`, fn(t));
 }

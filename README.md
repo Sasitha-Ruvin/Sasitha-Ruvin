@@ -9,8 +9,8 @@
 </picture>
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/donuts-dark.svg">
-  <img src="docs/assets/donuts-light.svg" alt="Languages in public, private and organization repositories" width="100%">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/languages-dark.svg">
+  <img src="docs/assets/languages-light.svg" alt="Languages across all repositories" width="100%">
 </picture>
 
 <picture>
@@ -23,7 +23,6 @@
 </p>
 
 <p align="center">
-  <a href="https://sasitha-ruvin.github.io/Sasitha-Ruvin/">Interactive charts</a> &nbsp;&nbsp;
   <a href="https://sasitha-ruween.vercel.app">Portfolio</a> &nbsp;&nbsp;
   <a href="https://www.linkedin.com/in/sasitha-ruween-1752502b3">LinkedIn</a> &nbsp;&nbsp;
   <a href="mailto:sasitharuween@gmail.com">Email</a>
