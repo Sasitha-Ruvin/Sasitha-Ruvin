@@ -31,6 +31,14 @@ export function render(d) {
     ? `<g class="fl" style="animation-delay:-${w}s"><path d="${FLAME}" fill="#ef4423"/><g class="f2" style="animation-delay:-${w + .4}s"><path d="${FLAME}" transform="translate(9.6 23.4) scale(.7)" fill="#ff8a1f"/></g><g class="f2" style="animation-delay:-${w + .2}s"><path d="${CORE}" fill="#ffd75e"/></g></g>`
     : `<path d="${FLAME}" fill="${t.line}"/>`;
 
+  function header(t) {
+    return wrap(236, 'Sasitha Ruvin, full-stack software engineer, Colombo, Sri Lanka', t, `<circle class="sun" cx="742" cy="150" r="92" fill="${t.sun}"/><path d="M0 222C160 196 300 226 470 208S720 178 860 206V236H0Z" fill="${t.hill2}"/>
+<text x="36" y="92" font-size="60" font-weight="700" style="letter-spacing:-2px" class="in">Sasitha Ruvin</text>
+<text x="38" y="132" font-size="22" font-weight="600" class="in" style="animation-delay:.2s">Full-stack software engineer</text>
+<text x="38" y="164" font-size="18" class="in" style="animation-delay:.35s">ERP, CRM, POS and AI systems with Go and TypeScript</text>
+<text x="38" y="190" class="s in" style="animation-delay:.5s">Colombo, Sri Lanka</text>`, `.sun{animation:sun 1.4s cubic-bezier(.2,.7,.2,1) backwards}@keyframes sun{from{transform:translateY(130px)}}`);
+  }
+
   function streak(t) {
     const cx = 430, cy = 226, R = 132, st = d.streak, lit = st.current > 0;
     const ring = (n, r, scale, color, speed) => Array.from({ length: n }, (_, i) => {
@@ -125,5 +133,5 @@ ${arcs}<text x="${cx}" y="${cy + 6}" font-size="38" font-weight="650" text-ancho
       `.gr{transform-box:fill-box;transform-origin:50% 100%;animation:gr .9s cubic-bezier(.2,.8,.2,1) backwards}@keyframes gr{from{transform:scaleY(0)}}.ln{stroke-dasharray:1;animation:ln 2s ease-out backwards}@keyframes ln{from{stroke-dashoffset:1}}`);
   }
 
-  for (const [mode, t] of Object.entries(T)) for (const [n, fn] of Object.entries({ streak, skyline, languages, rhythm })) writeFileSync(`${out}${n}-${mode}.svg`, fn(t));
+  for (const [mode, t] of Object.entries(T)) for (const [n, fn] of Object.entries({ header, streak, skyline, languages, rhythm })) writeFileSync(`${out}${n}-${mode}.svg`, fn(t));
 }
