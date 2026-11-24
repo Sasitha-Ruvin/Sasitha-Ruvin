@@ -1,186 +1,180 @@
-// Builds the profile SVGs from git history. Only aggregates are written:
-// no private repository, organization or file names are logged or published.
+// Collects GitHub activity into docs/stats.json, then renders the README cards.
+// Uses the GitHub API only; nothing is cloned. Only aggregates are published:
+// private repository and organization names are never logged or written.
 //   CI:    STATS_TOKEN=... node scripts/stats.mjs
-//   Local: node scripts/stats.mjs --local <folder of clones>
+//   Local: node scripts/stats.mjs --local <folder>   (reads clones already on disk)
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { render } from './render.mjs';
 
 const USER = 'Sasitha-Ruvin';
 const TOKEN = process.env.STATS_TOKEN;
 const localRoot = process.argv[2] === '--local' ? process.argv[3] : null;
-const OUT = new URL('../assets/', import.meta.url).pathname;
-// EXTRA_EMAILS (optional secret, comma separated) covers other commit addresses.
-const EMAILS = new Set([
-  '143161107+sasitha-ruvin@users.noreply.github.com',
-  'sasitha-ruvin@users.noreply.github.com',
-  'sasitharuween@gmail.com',
-  ...(process.env.EXTRA_EMAILS ?? '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean),
-]);
-const LANG = {
-  go: 'Go', ts: 'TypeScript', tsx: 'TypeScript', mts: 'TypeScript', js: 'JavaScript', jsx: 'JavaScript',
-  mjs: 'JavaScript', cjs: 'JavaScript', kt: 'Kotlin', kts: 'Kotlin', java: 'Java', cs: 'C#', py: 'Python',
-  php: 'PHP', dart: 'Dart', c: 'C/C++', h: 'C/C++', cpp: 'C/C++', hpp: 'C/C++', ino: 'C/C++', html: 'HTML',
-  css: 'CSS', scss: 'CSS', sql: 'SQL', prisma: 'Prisma', swift: 'Swift', rs: 'Rust', sh: 'Shell',
-};
-const SKIP = /(^|\/)(node_modules|vendor|dist|build|out|\.next|generated|gen|bin|obj|target|bower_components)\/|\.min\.|\.(designer|g)\.cs$|\.d\.ts$|\.sql\.go$|\.pb\.go$/i;
-const MAX_FILE_LINES = 2000; // a single change this large is an import or generated file
+const FILE = fileURLToPath(new URL('../docs/stats.json', import.meta.url));
+const EMAILS = ['143161107+sasitha-ruvin@users.noreply.github.com', 'sasitha-ruvin@users.noreply.github.com', 'sasitharuween@gmail.com',
+  ...(process.env.EXTRA_EMAILS ?? '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean)];
+const year = new Date().getUTCFullYear(), FIRST = 2023;
+const years = Array.from({ length: year - FIRST + 1 }, (_, i) => FIRST + i);
 
-async function api(path) {
-  const r = await fetch(`https://api.github.com${path}`, {
-    headers: { accept: 'application/vnd.github+json', ...(TOKEN && { authorization: `Bearer ${TOKEN}` }) },
-  });
-  if (!r.ok) throw new Error(`GitHub API returned ${r.status}`);
-  return r.json();
+// Each repo: { group, langs: {name: bytes}, commits: [{ at: unix seconds, key }] }
+const groupOf = (owner, isPrivate) => owner !== USER ? 'org' : isPrivate ? 'private' : 'public';
+
+async function gql(query, variables = {}) {
+  for (let i = 0; ; i++) {
+    const r = await fetch('https://api.github.com/graphql', {
+      method: 'POST', headers: { authorization: `Bearer ${TOKEN}` }, body: JSON.stringify({ query, variables }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok && j.data && !j.errors) return j.data;
+    const why = j.errors?.[0]?.type ?? r.status;
+    if (i === 3 || r.status === 401) throw new Error(`GitHub GraphQL failed: ${why}`); // messages can contain repo names
+    await new Promise(f => setTimeout(f, 2000 * 2 ** i));
+  }
 }
 
-async function listRepos() {
-  const urls = new Set();
-  const base = TOKEN ? '/user/repos?affiliation=owner,collaborator,organization_member' : `/users/${USER}/repos?type=owner`;
-  for (let p = 1; ; p++) {
-    const page = await api(`${base}&per_page=100&page=${p}`);
-    page.filter(r => !r.fork).forEach(r => urls.add(`https://github.com/${r.full_name}.git`));
-    if (page.length < 100) break;
+async function fromApi() {
+  const { viewer } = await gql('{viewer{id login}}');
+  if (viewer.login !== USER) throw new Error('STATS_TOKEN belongs to a different account');
+  const REPO = 'id isFork isPrivate isEmpty owner{login} stargazerCount languages(first:20,orderBy:{field:SIZE,direction:DESC}){edges{size node{name}}}';
+  const found = new Map();
+  for (let after = null; ;) {
+    const c = (await gql(`query($after:String){viewer{repositories(first:50,after:$after,affiliations:[OWNER,COLLABORATOR,ORGANIZATION_MEMBER],ownerAffiliations:[OWNER,COLLABORATOR,ORGANIZATION_MEMBER]){pageInfo{hasNextPage endCursor} nodes{${REPO}}}}}`, { after })).viewer.repositories;
+    c.nodes.forEach(n => found.set(n.id, n));
+    if (!c.pageInfo.hasNextPage) break;
+    after = c.pageInfo.endCursor;
   }
-  // Repositories contributed to without being a member.
-  for (let p = 1; p <= 10; p++) {
-    const { items } = await api(`/search/commits?q=author:${USER}&sort=author-date&per_page=100&page=${p}`);
-    items.filter(i => !i.repository.fork).forEach(i => urls.add(`https://github.com/${i.repository.full_name}.git`));
+  for (let after = null; ;) {
+    const c = (await gql(`query($after:String){viewer{repositoriesContributedTo(first:50,after:$after,includeUserRepositories:true,contributionTypes:[COMMIT,PULL_REQUEST]){pageInfo{hasNextPage endCursor} nodes{${REPO}}}}}`, { after })).viewer.repositoriesContributedTo;
+    c.nodes.forEach(n => found.set(n.id, n));
+    if (!c.pageInfo.hasNextPage) break;
+    after = c.pageInfo.endCursor;
+  }
+  const calendar = {}, totals = { prs: 0, issues: 0, reviews: 0 };
+  for (const y of years) {
+    const c = (await gql(`query($from:DateTime!,$to:DateTime!){viewer{contributionsCollection(from:$from,to:$to){
+      totalPullRequestContributions totalIssueContributions totalPullRequestReviewContributions
+      contributionCalendar{weeks{contributionDays{date contributionCount}}}
+      commitContributionsByRepository(maxRepositories:100){repository{${REPO}}}}}}`,
+    { from: `${y}-01-01T00:00:00Z`, to: `${y}-12-31T23:59:59Z` })).viewer.contributionsCollection;
+    for (const w of c.contributionCalendar.weeks) for (const d of w.contributionDays) calendar[d.date] = d.contributionCount;
+    c.commitContributionsByRepository.forEach(r => found.set(r.repository.id, r.repository));
+    totals.prs += c.totalPullRequestContributions; totals.issues += c.totalIssueContributions; totals.reviews += c.totalPullRequestReviewContributions;
+  }
+  const todo = [...found.values()].filter(r => !r.isFork && !r.isEmpty);
+  const HIST = 'history(first:100,after:$h,author:{id:$me}){pageInfo{hasNextPage endCursor} nodes{authoredDate messageHeadline parents{totalCount}}}';
+  const repos = [];
+  for (const r of todo) {
+    const commits = [];
+    const add = h => h.nodes.forEach(n => n.parents.totalCount < 2 && commits.push({ at: Date.parse(n.authoredDate) / 1000, key: n.messageHeadline }));
+    for (let refs = null; ;) { // every branch, so unmerged work counts
+      const page = (await gql(`query($id:ID!,$me:ID!,$refs:String,$h:String){node(id:$id){...on Repository{refs(refPrefix:"refs/heads/",first:20,after:$refs){pageInfo{hasNextPage endCursor} nodes{id target{...on Commit{${HIST}}}}}}}}`,
+        { id: r.id, me: viewer.id, refs, h: null })).node.refs;
+      for (const ref of page.nodes) {
+        let h = ref.target?.history;
+        if (!h) continue;
+        add(h);
+        while (h.pageInfo.hasNextPage) {
+          h = (await gql(`query($id:ID!,$me:ID!,$h:String){node(id:$id){...on Ref{target{...on Commit{${HIST}}}}}}`, { id: ref.id, me: viewer.id, h: h.pageInfo.endCursor })).node.target.history;
+          add(h);
+        }
+      }
+      if (!page.pageInfo.hasNextPage) break;
+      refs = page.pageInfo.endCursor;
+    }
+    repos.push({ group: groupOf(r.owner.login, r.isPrivate), langs: Object.fromEntries(r.languages.edges.map(e => [e.node.name, e.size])), commits });
+  }
+  const stars = todo.filter(r => r.owner.login === USER).reduce((s, r) => s + r.stargazerCount, 0);
+  return { repos, calendar, totals: { ...totals, stars } };
+}
+
+// Preview without a token: public API + GitHub's public contribution graph + clones on disk.
+async function fromLocal(root) {
+  const rest = async p => { const r = await fetch('https://api.github.com' + p); if (!r.ok) throw new Error(`REST ${r.status}`); return r.json(); };
+  const calendar = {};
+  for (const y of years) {
+    const html = await (await fetch(`https://github.com/users/${USER}/contributions?from=${y}-01-01&to=${y}-12-31`)).text();
+    const date = {};
+    for (const m of html.matchAll(/data-date="([\d-]+)" id="([^"]+)"/g)) { date[m[2]] = m[1]; calendar[m[1]] = 0; }
+    for (const m of html.matchAll(/<tool-tip[^>]*for="([^"]+)"[^>]*>(\d+) contribution/g)) calendar[date[m[1]]] = +m[2];
+  }
+  const meta = {}, map = new Map();
+  for (const r of await rest(`/users/${USER}/repos?per_page=100`)) meta[r.full_name] = r;
+  const get = (name, group, langs) => map.get(name) ?? map.set(name, { group, langs, commits: [] }).get(name);
+  const EXT = { go: 'Go', ts: 'TypeScript', tsx: 'TypeScript', js: 'JavaScript', jsx: 'JavaScript', mjs: 'JavaScript', kt: 'Kotlin', java: 'Java', cs: 'C#', py: 'Python', css: 'CSS', scss: 'SCSS', html: 'HTML', sql: 'PLpgSQL', cpp: 'C++', dart: 'Dart', php: 'PHP' };
+  const scan = (d, depth = 0) => readdirSync(d, { withFileTypes: true }).filter(e => e.isDirectory() && e.name !== 'node_modules').flatMap(e => {
+    const p = join(d, e.name); return [...(existsSync(join(p, '.git')) ? [p] : []), ...(depth < 1 ? scan(p, depth + 1) : [])]; });
+  for (const dir of scan(root)) {
+    const git = (...a) => execFileSync('git', ['-C', dir, ...a], { encoding: 'utf8', maxBuffer: 1 << 28, stdio: ['ignore', 'pipe', 'ignore'] });
+    let name; try { name = git('remote', 'get-url', 'origin').trim().replace(/\.git$/, '').split(/[/:]/).slice(-2).join('/'); } catch { continue; }
+    const langs = {};
+    let tree; try { tree = git('ls-tree', '-r', '-l', 'origin/HEAD'); } catch { tree = git('ls-tree', '-r', '-l', 'HEAD'); }
+    for (const l of tree.split('\n')) {
+      const [m, f] = l.split('\t'); const lang = EXT[f?.split('.').pop()];
+      if (lang && !/(^|\/)(generated|vendor|dist)\//.test(f)) langs[lang] = (langs[lang] ?? 0) + +m.trim().split(/\s+/)[3];
+    }
+    const repo = get(name, groupOf(name.split('/')[0], !meta[name]), langs);
+    for (const l of git('log', '--remotes', '--no-merges', '--format=%ae%x02%at%x02%s').split('\n')) {
+      const [e, at, key] = l.split('\x02');
+      if (EMAILS.includes(e?.toLowerCase())) repo.commits.push({ at: +at, key });
+    }
+  }
+  for (let p = 1; p <= 8; p++) {
+    const { items } = await rest(`/search/commits?q=author:${USER}&sort=author-date&per_page=100&page=${p}`);
+    for (const i of items) {
+      if (i.repository.fork || i.parents.length > 1) continue;
+      const n = i.repository.full_name, lang = meta[n]?.language;
+      get(n, groupOf(n.split('/')[0], false), lang ? { [lang]: 1 } : {}).commits.push({ at: Date.parse(i.commit.author.date) / 1000, key: i.commit.message.split('\n')[0] });
+    }
     if (items.length < 100) break;
   }
-  return [...urls];
-}
-
-const seen = new Set();
-const commits = [];
-let repoCount = 0;
-
-function readRepo(dir, refs) {
-  const log = execFileSync('git', ['-C', dir, 'log', refs, '--no-merges', '--no-renames', '--numstat',
-    '--format=%x01%ae%x02%at%x02%s'], { encoding: 'utf8', maxBuffer: 1 << 30, stdio: ['ignore', 'pipe', 'ignore'] });
-  let found = false;
-  for (const block of log.split('\x01').slice(1)) {
-    const [head, ...rows] = block.split('\n');
-    const [email, at, subject] = head.split('\x02');
-    if (!EMAILS.has(email.toLowerCase())) continue;
-    const key = `${at}|${subject}`; // the same commit rebased, or copied to another repo
-    if (seen.has(key)) continue;
-    seen.add(key);
-    found = true;
-    const lines = {};
-    for (const row of rows) {
-      const [add, , file] = row.split('\t');
-      const lang = file && LANG[file.replace(/"$/, '').split('.').pop().toLowerCase()];
-      if (!lang || SKIP.test(file) || !(+add <= MAX_FILE_LINES)) continue;
-      lines[lang] = (lines[lang] ?? 0) + +add;
-    }
-    commits.push({ at: +at, lines });
-  }
-  if (found) repoCount++;
-}
-
-function localRepos(root, depth = 0) {
-  return readdirSync(root, { withFileTypes: true }).filter(e => e.isDirectory()).flatMap(e => {
-    const dir = join(root, e.name);
-    return [...(existsSync(join(dir, '.git')) ? [dir] : []), ...(depth < 1 ? localRepos(dir, depth + 1) : [])];
-  });
+  const count = async t => (await rest(`/search/issues?q=author:${USER}+type:${t}&per_page=1`)).total_count;
+  return { repos: [...map.values()], calendar, totals: { prs: await count('pr'), issues: await count('issue'), reviews: 0, stars: Object.values(meta).reduce((s, r) => s + r.stargazers_count, 0) } };
 }
 
 if (!TOKEN && !localRoot) throw new Error('STATS_TOKEN is not set: private and organization work would be missing.');
-if (localRoot) for (const d of localRepos(localRoot)) readRepo(d, '--remotes');
+const { repos, calendar, totals } = localRoot ? await fromLocal(localRoot) : await fromApi();
 
-const env = { ...process.env, GIT_TERMINAL_PROMPT: '0' };
-if (TOKEN) Object.assign(env, {
-  GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: 'http.https://github.com/.extraheader',
-  GIT_CONFIG_VALUE_0: `AUTHORIZATION: basic ${Buffer.from(`x-access-token:${TOKEN}`).toString('base64')}`,
-});
-const tmp = mkdtempSync(join(tmpdir(), 'stats-'));
-try {
-  const repos = await listRepos();
-  for (const [i, url] of repos.entries()) {
-    const dir = join(tmp, String(i));
-    try {
-      execFileSync('git', ['clone', '--bare', '--quiet', url, dir], { env, stdio: 'ignore', timeout: 300000 });
-      readRepo(dir, '--branches');
-    } catch { throw new Error(`Could not read repository ${i + 1} of ${repos.length}`); } // name withheld
-    rmSync(dir, { recursive: true, force: true });
+// ---- aggregate (Colombo time, UTC+5:30)
+const local = at => new Date((at + 19800) * 1000);
+const today = local(Date.now() / 1000).toISOString().slice(0, 10);
+const seen = new Set(), months = {}, hours = {}, repoCount = { public: 0, private: 0, org: 0 };
+let commits = 0;
+for (const r of repos) {
+  const sum = Object.values(r.langs).reduce((a, b) => a + b, 0);
+  let mine = 0;
+  for (const c of r.commits) {
+    const k = `${c.at}|${c.key}`; // same commit on another branch, rebased, or copied to another repo
+    if (seen.has(k)) continue;
+    seen.add(k); commits++; mine++;
+    const d = local(c.at), m = d.toISOString().slice(0, 7);
+    const cell = ((months[m] ??= {})[r.group] ??= { commits: 0, langs: {} });
+    cell.commits++;
+    for (const [l, b] of Object.entries(r.langs)) cell.langs[l] = (cell.langs[l] ?? 0) + b / sum;
+    const h = (hours[r.group] ??= Array(168).fill(0));
+    h[((d.getUTCDay() + 6) % 7) * 24 + d.getUTCHours()]++;
   }
-  console.log(`Read ${repos.length} remote repositories`);
-} finally { rmSync(tmp, { recursive: true, force: true }); }
-
-// ---- aggregate
-const DAY = 86400, now = Date.now() / 1000;
-const recent = days => commits.filter(c => c.at > now - days * DAY);
-const day = at => new Date((at + 19800) * 1000).toISOString().slice(0, 10); // Colombo, UTC+5:30
-function languages(list) {
-  // Each commit counts once, split by the lines it added per language, so a
-  // bulk import cannot outweigh months of ordinary work.
-  const t = {};
-  for (const c of list) {
-    const total = Object.values(c.lines).reduce((a, b) => a + b, 0);
-    if (total) for (const [l, n] of Object.entries(c.lines)) t[l] = (t[l] ?? 0) + n / total;
-  }
-  const sum = Object.values(t).reduce((a, b) => a + b, 0) || 1;
-  return Object.entries(t).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, n]) => ({ name, pct: n / sum * 100 }));
+  if (mine) repoCount[r.group]++;
 }
-const weeks = Array(52).fill(0);
-for (const c of commits) {
-  const w = 51 - Math.floor((now - c.at) / (7 * DAY));
-  if (w >= 0 && w < 52) weeks[w]++;
+for (const m of Object.values(months)) for (const g of Object.values(m)) for (const l in g.langs) g.langs[l] = +g.langs[l].toFixed(3);
+const days = Object.entries(calendar).filter(([d]) => d <= today).sort((a, b) => a[0] < b[0] ? -1 : 1);
+while (days.length && !days[0][1]) days.shift();
+let run = 0, start = null, longest = { n: 0 };
+for (const [d, n] of days) {
+  if (n) { if (!run++) start = d; if (run > longest.n) longest = { n: run, from: start, to: d }; } else if (d !== today) run = 0;
 }
+const best = days.reduce((a, b) => b[1] > a[1] ? b : a, ['', 0]);
 const data = {
-  updated: day(now), commits: commits.length, commitsYear: recent(364).length, repositories: repoCount,
-  activeDays: new Set(commits.map(c => day(c.at))).size, weeks,
-  languagesAll: languages(commits), languagesRecent: languages(recent(90)),
+  updated: today, complete: !localRoot, commits, repos: repoCount, ...totals,
+  contributions: days.reduce((s, d) => s + d[1], 0), activeDays: days.filter(d => d[1]).length,
+  streak: { current: run, from: run ? start : null, longest }, best: { date: best[0], n: best[1] },
+  calendar: { from: days[0][0], counts: days.map(d => d[1]) }, months, hours,
 };
-const statsFile = join(OUT, 'stats.json');
-if (existsSync(statsFile) && !process.env.ALLOW_DROP) {
-  const prev = JSON.parse(readFileSync(statsFile, 'utf8'));
-  if (data.commits < prev.commits * 0.95)
-    throw new Error(`Commits fell from ${prev.commits} to ${data.commits}; the token has probably lost access. Set ALLOW_DROP=1 to accept.`);
+if (existsSync(FILE) && !process.env.ALLOW_DROP) {
+  const prev = JSON.parse(readFileSync(FILE, 'utf8'));
+  if (commits < prev.commits * 0.9) throw new Error(`Commits fell from ${prev.commits} to ${commits}; the token may have lost access. Set ALLOW_DROP=1 to accept.`);
 }
-writeFileSync(statsFile, JSON.stringify(data, null, 2) + '\n');
-
-// ---- render
-const THEMES = {
-  light: { ink: '#1f2328', sub: '#59636e', line: '#d1d9e0', track: '#eff2f5', accent: '#0f766e' },
-  dark: { ink: '#f0f6fc', sub: '#9198a1', line: '#3d444d', track: '#21262d', accent: '#2bb5a6' },
-};
-const W = 720;
-const svg = (h, label, t, body) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${h}" width="${W}" height="${h}" role="img" aria-label="${label}">
-<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;fill:${t.ink}}.s{fill:${t.sub};font-size:16px}.h{font-size:18px;font-weight:600}.n{font-size:38px;font-weight:650;letter-spacing:-1px}</style>
-${body}
-</svg>\n`;
-const pct = p => p < 1 ? '&lt;1%' : `${Math.round(p)}%`;
-const fmt = n => n.toLocaleString('en-US');
-
-function hero(t) {
-  return svg(170, 'Sasitha Ruvin, software engineer, Colombo, Sri Lanka', t, `
-<text x="0" y="66" font-size="62" font-weight="700" style="letter-spacing:-2.5px">Sasitha Ruvin</text>
-<rect x="2" y="92" width="56" height="5" rx="2.5" fill="${t.accent}"/>
-<text x="1" y="132" font-size="22">Software engineer. Go, TypeScript and the systems around them.</text>
-<text x="1" y="161" class="s">Colombo, Sri Lanka</text>`);
-}
-function activity(t) {
-  const tiles = [[data.commits, 'commits'], [data.commitsYear, 'in the last year'], [data.repositories, 'repositories'], [data.activeDays, 'active days']];
-  const max = Math.max(...weeks, 1), step = W / 52, base = 232;
-  const bars = weeks.map((n, i) => n ? `<rect x="${(i * step + 1).toFixed(1)}" y="${(base - n / max * 84).toFixed(1)}" width="${(step - 2).toFixed(1)}" height="${(n / max * 84).toFixed(1)}" rx="2" fill="${t.accent}"/>` : '').join('');
-  return svg(268, `${fmt(data.commits)} commits across ${data.repositories} repositories`, t,
-    tiles.map(([n, l], i) => `<text x="${i * 184}" y="40" class="n">${fmt(n)}</text><text x="${i * 184 + 1}" y="66" class="s">${l}</text>`).join('') +
-    `<text x="0" y="122" class="h">Commits per week</text><text x="${W}" y="122" class="s" text-anchor="end">busiest week: ${max}</text>
-${bars}<rect x="0" y="${base}" width="${W}" height="1" fill="${t.line}"/>
-<text x="0" y="258" class="s">a year ago</text><text x="${W}" y="258" class="s" text-anchor="end">this week</text>`);
-}
-function langs(t) {
-  const col = (x, title, list) => `<text x="${x}" y="20" class="h">${title}</text>` + list.map((l, i) => {
-    const y = 56 + i * 46;
-    return `<text x="${x}" y="${y}" font-size="17">${l.name}</text><text x="${x + 335}" y="${y}" class="s" text-anchor="end">${pct(l.pct)}</text>
-<rect x="${x}" y="${y + 10}" width="335" height="8" rx="4" fill="${t.track}"/><rect x="${x}" y="${y + 10}" width="${Math.max(8, l.pct * 3.35).toFixed(1)}" height="8" rx="4" fill="${t.accent}"/>`;
-  }).join('');
-  const label = 'Last 90 days: ' + data.languagesRecent.map(l => `${l.name} ${pct(l.pct)}`).join(', ') + '. All time: ' + data.languagesAll.map(l => `${l.name} ${pct(l.pct)}`).join(', ');
-  return svg(404, label, t, col(0, 'Last 90 days', data.languagesRecent) + col(385, 'All time', data.languagesAll));
-}
-for (const [mode, t] of Object.entries(THEMES))
-  for (const [name, fn] of Object.entries({ hero, activity, langs })) writeFileSync(join(OUT, `${name}-${mode}.svg`), fn(t));
-console.log(`${data.commits} commits, ${data.repositories} repositories`);
+writeFileSync(FILE, JSON.stringify(data) + '\n');
+render(data);
+console.log(`${commits} commits; repos: ${JSON.stringify(repoCount)}; streak ${run}, longest ${longest.n}; contributions ${data.contributions}`);

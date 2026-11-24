@@ -1,8 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 170" width="720" height="170" role="img" aria-label="Sasitha Ruvin, software engineer, Colombo, Sri Lanka">
-<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;fill:#f0f6fc}.s{fill:#9198a1;font-size:16px}.h{font-size:18px;font-weight:600}.n{font-size:38px;font-weight:650;letter-spacing:-1px}</style>
-
-<text x="0" y="66" font-size="62" font-weight="700" style="letter-spacing:-2.5px">Sasitha Ruvin</text>
-<rect x="2" y="92" width="56" height="5" rx="2.5" fill="#2bb5a6"/>
-<text x="1" y="132" font-size="22">Software engineer. Go, TypeScript and the systems around them.</text>
-<text x="1" y="161" class="s">Colombo, Sri Lanka</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 172" width="860" height="172" role="img" aria-label="Sasitha Ruvin, software engineer, Colombo">
+<style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;fill:#f0f6fc}.s{fill:#9198a1;font-size:15px}.h{font-size:19px;font-weight:600}.n{font-size:40px;font-weight:650;letter-spacing:-1px}
+.up{transform-box:fill-box;transform-origin:bottom;animation:up .8s cubic-bezier(.2,.7,.2,1) backwards}.rt{transform-box:fill-box;transform-origin:left;animation:rt .9s cubic-bezier(.2,.7,.2,1) backwards}.in{animation:in .6s backwards}
+@keyframes up{from{transform:scaleY(0)}}@keyframes rt{from{transform:scaleX(0)}}@keyframes in{from{opacity:0}}@media(prefers-reduced-motion:reduce){*{animation:none!important}}</style>
+<text x="0" y="72" font-size="68" font-weight="700" style="letter-spacing:-3px" class="in">Sasitha Ruvin</text>
+<rect x="2" y="98" width="72" height="5" rx="2.5" fill="#3987e5" class="rt"/>
+<text x="1" y="140" font-size="23">Software engineer. Go, TypeScript and the systems around them.</text><text x="1" y="167" class="s">Colombo, Sri Lanka</text>
 </svg>

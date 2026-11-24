@@ -1,6 +1,6 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/hero-dark.svg">
-  <img src="assets/hero-light.svg" alt="Sasitha Ruvin, software engineer in Colombo, Sri Lanka" width="720">
+  <img src="assets/hero-light.svg" alt="Sasitha Ruvin, software engineer in Colombo, Sri Lanka" width="100%">
 </picture>
 
 I build ERP and CRM systems, client websites and AI-powered automation, and I write firmware for machinery too. Right now I'm exploring applied AI, voice agents and scalable architectures. BSc (Hons) Computer Science.
@@ -9,19 +9,29 @@ I build ERP and CRM systems, client websites and AI-powered automation, and I wr
 
 ## Activity
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/activity-dark.svg">
-  <img src="assets/activity-light.svg" alt="Commit totals and commits per week over the last year" width="720">
-</picture>
+**[Open the interactive dashboard →](https://sasitha-ruvin.github.io/Sasitha-Ruvin/)**
 
-## Languages
+<a href="https://sasitha-ruvin.github.io/Sasitha-Ruvin/"><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/overview-dark.svg">
+  <img src="assets/overview-light.svg" alt="Streaks and totals" width="100%">
+</picture></a>
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/langs-dark.svg">
-  <img src="assets/langs-light.svg" alt="Share of commits by language, last 90 days and all time" width="720">
-</picture>
+<a href="https://sasitha-ruvin.github.io/Sasitha-Ruvin/"><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/calendar-dark.svg">
+  <img src="assets/calendar-light.svg" alt="Contribution calendar for the last year" width="100%">
+</picture></a>
 
-<sub>Share of my commits by language, across public and private work. Generated code excluded. [How it's counted](scripts/stats.mjs)</sub>
+<a href="https://sasitha-ruvin.github.io/Sasitha-Ruvin/"><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/languages-dark.svg">
+  <img src="assets/languages-light.svg" alt="Languages in personal public, personal private and organization repositories" width="100%">
+</picture></a>
+
+<a href="https://sasitha-ruvin.github.io/Sasitha-Ruvin/"><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/months-dark.svg">
+  <img src="assets/months-light.svg" alt="Commits per month by language" width="100%">
+</picture></a>
+
+<sub>Each commit is split across its repository's languages, on every branch. Private work is included as totals only.</sub>
 
 ## Stack
 

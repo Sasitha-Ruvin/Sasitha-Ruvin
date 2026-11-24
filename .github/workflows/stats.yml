@@ -22,9 +22,8 @@ jobs:
       - run: node scripts/stats.mjs
         env:
           STATS_TOKEN: ${{ secrets.STATS_TOKEN }}
-          EXTRA_EMAILS: ${{ secrets.EXTRA_EMAILS }}
       - run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets
+          git add assets docs
           git diff --cached --quiet || { git commit -m "Update profile stats"; git push; }
