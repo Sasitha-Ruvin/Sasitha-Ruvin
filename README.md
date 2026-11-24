@@ -7,6 +7,7 @@
 </p>
 
 <picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/skyline-dark.svg"><img src="docs/assets/skyline-light.svg" alt="A year of contributions as a 3D skyline" width="100%"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/commits-dark.svg"><img src="docs/assets/commits-light.svg" alt="Commits per month over two years and by weekday" width="100%"></picture>
 <picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/work-dark.svg"><img src="docs/assets/work-light.svg" alt="Languages and commit hours" width="100%"></picture>
 <picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/growth-dark.svg"><img src="docs/assets/growth-light.svg" alt="Contributions by year and by week" width="100%"></picture>
 <picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/badges-dark.svg"><img src="docs/assets/badges-light.svg" alt="Achievements" width="100%"></picture>

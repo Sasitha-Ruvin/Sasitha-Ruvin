@@ -127,6 +127,27 @@ ${bird(470, 110, .9, 1)}${bird(500, 92, .7, 3)}${bird(440, 84, .6, 5)}${bird(410
     `.do{animation:do 1.2s cubic-bezier(.2,.7,.2,1) backwards}@keyframes do{from{stroke-dasharray:0 ${f1(C)}}}.gr{transform-box:fill-box;transform-origin:50% 100%;animation:gr .8s backwards}@keyframes gr{from{transform:scaleY(0)}}.rt{transform-box:fill-box;transform-origin:0 50%;animation:rt .9s backwards}@keyframes rt{from{transform:scaleX(0)}}.sw{transform-origin:${kx}px ${ky}px;animation:sw 12s linear infinite}@keyframes sw{to{transform:rotate(360deg)}}`);
   }
 
+  function commits(t) {
+    const H = 392, N = 24, e = new Date(end), fills = [t.towers[1][0], t.sun, t.towers[3][0]], names = ['Public', 'Private', 'Organization'];
+    const keys = Array.from({ length: N }, (_, i) => new Date(Date.UTC(e.getUTCFullYear(), e.getUTCMonth() - N + 1 + i, 1)).toISOString().slice(0, 7));
+    const rows = keys.map(k => GROUPS.map(g => d.months[k]?.[g]?.commits ?? 0)), sums = rows.map(r => r[0] + r[1] + r[2]);
+    const max = Math.max(...sums, 1), best = sums.indexOf(max), X = i => 34 + i * 530 / N, bw = 530 / N - 5;
+    const bars = rows.map((r, i) => {
+      let y = 320;
+      const seg = r.map((v, g) => { if (!v) return ''; const h = Math.max(2, v / max * 196); y -= h; return `<rect x="${f1(X(i))}" y="${f1(y)}" width="${f1(bw)}" height="${f1(Math.max(1.5, h - 1.5))}" rx="3" fill="${fills[g]}"/>`; }).join('');
+      return `<g class="gr${i === best ? ' top' : ''}" style="animation-delay:${(i * .05).toFixed(2)}s">${seg || `<rect x="${f1(X(i))}" y="317" width="${f1(bw)}" height="3" rx="1.5" fill="${t.line}"/>`}</g>${i % 4 === 3 ? `<text x="${f1(X(i) + bw / 2)}" y="346" class="s" text-anchor="middle">${utc(keys[i] + '-01', { month: 'short' })} ${keys[i].slice(2, 4)}</text>` : ''}`;
+    }).join('');
+    const top = 320 - 196, bx = X(best) + bw / 2;
+    const legend = names.map((n, g) => `<circle cx="${40 + g * 98 + (g > 1 ? 4 : 0)}" cy="76" r="6" fill="${fills[g]}"/><text x="${52 + g * 98 + (g > 1 ? 4 : 0)}" y="81" class="s">${n}</text>`).join('');
+    const week = Array(7).fill(0);
+    for (const g of GROUPS) (d.hours[g] ?? []).forEach((v, i) => { week[Math.floor(i / 24)] += v; });
+    const wm = Math.max(...week, 1), bd = week.indexOf(wm);
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((n, i) => { const y = 88 + i * 39, w = Math.max(10, week[i] / wm * 112); return `<text x="630" y="${y + 5}" font-size="16"${i === bd ? ' font-weight="700"' : ''}>${n}</text><rect x="674" y="${y - 9}" width="112" height="18" rx="9" fill="${t.line}" opacity=".6"/><rect class="rt" x="674" y="${y - 9}" width="${f1(w)}" height="18" rx="9" fill="${i === bd ? t.coral : t.towers[1][0]}" style="animation-delay:${(i * .08).toFixed(2)}s"/><text x="832" y="${y + 5}" class="s" text-anchor="end">${fmt(week[i])}</text>`; }).join('');
+    return wrap(H, `Commits per month over two years, busiest month ${max}. Commits by weekday`, t, [[0, 0, 600, H], [602, 0, 258, H]], `<text x="34" y="44" class="h">Commits over two years</text>${legend}<rect x="34" y="320" width="530" height="1" fill="${t.line}"/>${bars}<text x="${f1(Math.min(540, Math.max(60, bx)))}" y="${top - 10}" font-size="16" font-weight="600" text-anchor="middle">${max}</text>
+<text x="630" y="44" class="h">By weekday</text>${days}`,
+    `.gr{transform-box:fill-box;transform-origin:50% 100%;animation:gr .9s cubic-bezier(.2,.8,.2,1) backwards}@keyframes gr{from{transform:scaleY(0)}}.top{animation:gr .9s backwards,tp 2.6s ease-in-out 2.4s infinite}@keyframes tp{50%{opacity:.72}}.rt{transform-box:fill-box;transform-origin:0 50%;animation:rt .9s cubic-bezier(.2,.8,.2,1) backwards}@keyframes rt{from{transform:scaleX(0)}}`);
+  }
+
   function growth(t) {
     const H = 372, by = {};
     d.calendar.counts.forEach((v, i) => { const y = utc(from + i * DAY, { year: 'numeric' }); by[y] = (by[y] ?? 0) + v; });
@@ -186,5 +207,5 @@ ${bird(470, 110, .9, 1)}${bird(500, 92, .7, 3)}${bird(440, 84, .6, 5)}${bird(410
     [0, 1, 2].map(i => `<g class="sl" style="animation-delay:${i * .25}s"><rect x="-24" y="${96 + i * 78}" width="262" height="64" rx="16" fill="#fff4dc" filter="url(#sh)"/><circle cx="14" cy="${128 + i * 78}" r="18" fill="${[t.sun, '#00908a', '#d99a1c'][i]}"/><rect x="46" y="${114 + i * 78}" width="${[110, 84, 124][i]}" height="10" rx="5" fill="#b5a592"/><rect x="46" y="${132 + i * 78}" width="${[70, 96, 60][i]}" height="8" rx="4" fill="#e0cfae"/><path class="ck" pathLength="1" style="animation-delay:${i * .5}s" d="M196 ${128 + i * 78}l9 10 17-20" fill="none" stroke="#00908a" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>`).join(''),
     `.sl{animation:sl .8s backwards}@keyframes sl{from{transform:translateX(40px);opacity:0}}.ck{stroke-dasharray:1;animation:ck 5s ease-in-out infinite}@keyframes ck{0%{stroke-dashoffset:1}14%,90%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:0;opacity:0}}`);
 
-  for (const [mode, t] of Object.entries(T)) for (const [n, fn] of Object.entries({ scene, skyline, work, growth, badges, stack, holidays, students })) writeFileSync(`${out}${n}-${mode}.svg`, fn(t));
+  for (const [mode, t] of Object.entries(T)) for (const [n, fn] of Object.entries({ scene, skyline, commits, work, growth, badges, stack, holidays, students })) writeFileSync(`${out}${n}-${mode}.svg`, fn(t));
 }
