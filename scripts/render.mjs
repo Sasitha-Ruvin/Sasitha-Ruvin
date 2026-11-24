@@ -16,11 +16,11 @@ const date = d => new Date(d + 'T00:00Z').toLocaleDateString('en-US', { month: '
 export function render(d) {
   const out = fileURLToPath(new URL('../assets/', import.meta.url));
   mkdirSync(out, { recursive: true });
-  const wrap = (h, label, t, body, card = true) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${h}" width="${W}" height="${h}" role="img" aria-label="${label}">
+  const wrap = (h, label, t, body) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${h}" width="${W}" height="${h}" role="img" aria-label="${label}">
 <style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;fill:${t.ink}}.s{fill:${t.sub};font-size:15px}.h{font-size:19px;font-weight:600}.n{font-size:40px;font-weight:650;letter-spacing:-1px}
 .up{transform-box:fill-box;transform-origin:bottom;animation:up .8s cubic-bezier(.2,.7,.2,1) backwards}.rt{transform-box:fill-box;transform-origin:left;animation:rt .9s cubic-bezier(.2,.7,.2,1) backwards}.in{animation:in .6s backwards}
 @keyframes up{from{transform:scaleY(0)}}@keyframes rt{from{transform:scaleX(0)}}@keyframes in{from{opacity:0}}@media(prefers-reduced-motion:reduce){*{animation:none!important}}</style>
-${card ? `<rect x=".5" y=".5" width="${W - 1}" height="${h - 1}" rx="14" fill="${t.card}" stroke="${t.line}"/>` : ''}${body}
+${body}
 </svg>\n`;
   const cur = new Date(d.updated + 'T00:00Z'), monthKeys = [];
   for (let i = 11; i >= 0; i--) monthKeys.push(new Date(Date.UTC(cur.getUTCFullYear(), cur.getUTCMonth() - i, 1)).toISOString().slice(0, 7));
@@ -33,58 +33,49 @@ ${card ? `<rect x=".5" y=".5" width="${W - 1}" height="${h - 1}" rx="14" fill="$
   const ALL = ['public', 'private', 'org'], color = (t, l) => t.s[LANGS.indexOf(l)] ?? t.other;
 
   const cards = {
-    hero: t => wrap(172, 'Sasitha Ruvin, software engineer, Colombo', t, `<text x="0" y="72" font-size="68" font-weight="700" style="letter-spacing:-3px" class="in">Sasitha Ruvin</text>
-<rect x="2" y="98" width="72" height="5" rx="2.5" fill="${t.s[0]}" class="rt"/>
-<text x="1" y="140" font-size="23">Software engineer. Go, TypeScript and the systems around them.</text><text x="1" y="167" class="s">Colombo, Sri Lanka</text>`, false),
     overview: t => {
-      const st = d.streak, short = x => date(x).replace(/, \d+$/, '');
+      const st = d.streak;
       const flame = (lit, delay = 0) => lit
         ? `<g class="fl" style="animation-delay:-${delay}s"><path d="${FLAME}" fill="#f0441e"/><g class="fl2" style="animation-delay:-${delay + .4}s"><path d="${FLAME}" transform="translate(9.6 23.4) scale(.7)" fill="#ff8a1f"/></g><g class="fl3" style="animation-delay:-${delay + .2}s"><path d="${CORE}" fill="#ffd75e"/></g></g>`
         : `<path d="${FLAME}" fill="${t.line}"/>`;
       const embers = [[18, 0], [30, .7], [42, 1.3], [24, 1.9], [38, 2.4]].map(([x, w]) => `<circle class="em" cx="${x}" cy="26" r="2.4" fill="#ff8a1f" style="animation-delay:${w}s"/>`).join('');
-      const bolt = `<path class="bo" d="M38 4 10 46h18l-6 30 32-44H34z" fill="#f5b301"/>`;
-      const col = (i, icon, label, n, unit, sub) => { const x = 28 + i * 275; return `<g transform="translate(${x} 40) scale(.94)"><g class="in" style="animation-delay:${i * .15}s">${icon}</g></g>
-<g class="in" style="animation-delay:${.15 + i * .15}s"><text x="${x + 76}" y="46" class="s">${label}</text><text x="${x + 76}" y="96" font-size="54" font-weight="700" style="letter-spacing:-2px">${fmt(n)}<tspan font-size="16" font-weight="400" dx="8" style="letter-spacing:0;fill:${t.sub}">${unit}</tspan></text><text x="${x + 76}" y="122" class="s">${sub}</text></g>`; };
       const days = n => n === 1 ? 'day' : 'days';
       const counts = d.calendar.counts, end = Date.parse(d.updated + 'T00:00Z');
       const week = Array.from({ length: 7 }, (_, i) => {
-        const v = counts[counts.length - 7 + i] ?? 0, x = 196 + i * 92;
-        const name = new Date(end - (6 - i) * 864e5).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
-        return `<g class="in" style="animation-delay:${(.5 + i * .12).toFixed(2)}s"><g transform="translate(${x} 158) scale(.5)">${flame(v > 0, i * .23)}</g><text x="${x + 42}" y="178" font-size="16" font-weight="600">${name}</text><text x="${x + 42}" y="197" class="s">${v}</text></g>`;
+        const v = counts[counts.length - 7 + i] ?? 0, x = 238 + i * 64;
+        const name = new Date(end - (6 - i) * 864e5).toLocaleDateString('en-US', { weekday: 'narrow', timeZone: 'UTC' });
+        return `<g class="in" style="animation-delay:${(.4 + i * .1).toFixed(2)}s"><g transform="translate(${x - 14} 262) scale(.44)">${flame(v > 0, i * .23)}</g><text x="${x}" y="324" class="s" text-anchor="middle">${name}</text></g>`;
       }).join('');
-      const tiles = [[d.contributions, 'contributions'], [d.commits, 'commits'], [d.prs, 'pull requests'], [d.repos.public + d.repos.private + d.repos.org, 'repositories'], [d.activeDays, 'active days']];
-      const anim = `<style>.fl,.fl2,.fl3{transform-box:fill-box;transform-origin:50% 100%}.fl{animation:fl 1.5s ease-in-out infinite}.fl2{animation:fl2 1.1s ease-in-out infinite}.fl3{animation:fl2 .8s ease-in-out infinite}.em{opacity:0;animation:em 3s ease-out infinite}.bo{transform-box:fill-box;transform-origin:center;animation:bo 2.6s ease-in-out infinite}
+      const side = (x, n, l) => `<g class="in" style="animation-delay:.3s"><text x="${x}" y="134" font-size="38" font-weight="650" text-anchor="middle" style="letter-spacing:-1px">${fmt(n)}</text><text x="${x}" y="163" class="s" text-anchor="middle">${l}</text></g>`;
+      const anim = `<style>.fl,.fl2,.fl3{transform-box:fill-box;transform-origin:50% 100%}.fl{animation:fl 1.5s ease-in-out infinite}.fl2{animation:fl2 1.1s ease-in-out infinite}.fl3{animation:fl2 .8s ease-in-out infinite}.em{opacity:0;animation:em 3s ease-out infinite}
 @keyframes fl{0%,100%{transform:scale(1) skewX(0)}25%{transform:scale(.96,1.05) skewX(-3deg)}50%{transform:scale(1.03,.96) skewX(2deg)}75%{transform:scale(.97,1.06) skewX(3deg)}}
 @keyframes fl2{0%,100%{transform:scale(1)}40%{transform:scale(.9,1.1) skewX(4deg)}70%{transform:scale(1.06,.92) skewX(-4deg)}}
-@keyframes em{0%{transform:translate(0,0);opacity:0}15%{opacity:1}100%{transform:translate(8px,-48px) scale(.2);opacity:0}}
-@keyframes bo{0%,82%,100%{transform:scale(1);opacity:1}86%{transform:scale(1.14);opacity:.55}90%{transform:scale(1.05);opacity:1}94%{transform:scale(1.14);opacity:.7}}</style>`;
-      return wrap(330, `Current streak ${st.current} ${days(st.current)}, longest ${st.longest.n} days, ${fmt(d.contributions)} contributions`, t, anim +
-        col(0, (st.current ? embers : '') + flame(st.current > 0), 'Current streak', st.current, days(st.current), st.current ? `since ${short(st.from)}` : 'commit to light it') +
-        col(1, flame(st.longest.n > 0, .6), 'Longest streak', st.longest.n, days(st.longest.n), st.longest.n ? `${short(st.longest.from)} to ${date(st.longest.to)}` : '') +
-        col(2, bolt, 'Best day', d.best.n, 'contributions', date(d.best.date)) +
-        `<rect x="28" y="142" width="${W - 56}" height="1" fill="${t.line}"/><text x="28" y="186" font-size="16" font-weight="600">Last 7 days</text>${week}<rect x="28" y="214" width="${W - 56}" height="1" fill="${t.line}"/>` +
-        tiles.map(([n, l], i) => `<g class="in" style="animation-delay:${.6 + i * .08}s"><text x="${28 + i * 165}" y="270" font-size="32" font-weight="650">${fmt(n)}</text><text x="${28 + i * 165}" y="296" class="s">${l}</text></g>`).join(''));
+@keyframes em{0%{transform:translate(0,0);opacity:0}15%{opacity:1}100%{transform:translate(8px,-48px) scale(.2);opacity:0}}</style>`;
+      return wrap(344, `Current streak ${st.current} ${days(st.current)}, longest ${st.longest.n} days, ${fmt(d.contributions)} contributions`, t, anim +
+        `<g transform="translate(380.4 12) scale(1.55)">${st.current ? embers : ''}${flame(st.current > 0)}</g>
+<text x="430" y="196" font-size="62" font-weight="700" text-anchor="middle" style="letter-spacing:-2px" class="in">${fmt(st.current)}</text><text x="430" y="228" class="s" text-anchor="middle">day streak</text>` +
+        side(140, d.contributions, 'contributions') + side(720, st.longest.n, 'longest streak') + week);
     },
     calendar: t => {
       const n = d.calendar.counts, from = Date.parse(d.calendar.from + 'T00:00Z');
       const end = Date.parse(d.updated + 'T00:00Z'), first = end - (364 + new Date(end).getUTCDay()) * 864e5;
-      let body = '', total = 0, lastM = -1; const p = 15.2;
+      let body = '', total = 0, lastM = -1; const p = 16.2;
       for (let i = 0; ; i++) {
         const day = first + i * 864e5; if (day > end) break;
-        const v = n[(day - from) / 864e5] ?? 0, w = Math.floor(i / 7), x = 28 + w * p; total += v;
+        const v = n[(day - from) / 864e5] ?? 0, w = Math.floor(i / 7), x = w * p; total += v;
         const lv = !v ? 0 : v < 3 ? 1 : v < 6 ? 2 : v < 10 ? 3 : 4;
         const D = new Date(day);
         if (i % 7 === 0 && D.getUTCMonth() !== lastM) { if (D.getUTCDate() < 8 && w < 51) body += `<text x="${x}" y="72" class="s">${D.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' })}</text>`; lastM = D.getUTCMonth(); }
-        body += `<rect x="${x.toFixed(1)}" y="${84 + (i % 7) * p}" width="12.8" height="12.8" rx="3" fill="${t.ramp[lv]}" class="in" style="animation-delay:${(w * .012).toFixed(2)}s"/>`;
+        body += `<rect x="${x.toFixed(1)}" y="${84 + (i % 7) * p}" width="13.4" height="13.4" rx="3" fill="${t.ramp[lv]}" class="in" style="animation-delay:${(w * .012).toFixed(2)}s"/>`;
       }
-      return wrap(236, `${fmt(total)} contributions in the last year`, t, `<text x="28" y="40" class="h">${fmt(total)} contributions in the last year</text>${body}<text x="640" y="218" class="s">Less</text>${t.ramp.map((c, i) => `<rect x="${684 + i * 20}" y="206" width="14" height="14" rx="3" fill="${c}"/>`).join('')}<text x="792" y="218" class="s">More</text>`);
+      return wrap(236, `${fmt(total)} contributions in the last year`, t, `<text x="0" y="28" class="h">${fmt(total)} contributions in the last year</text>${body}<text x="640" y="218" class="s">Less</text>${t.ramp.map((c, i) => `<rect x="${684 + i * 20}" y="206" width="14" height="14" rx="3" fill="${c}"/>`).join('')}<text x="792" y="218" class="s">More</text>`);
     },
     languages: t => {
       const cols = [['Personal, public', ['public']], ['Personal, private', ['private']], ['Organizations', ['org']]];
-      return wrap(402, 'Languages across personal and organization repositories', t, `<text x="28" y="40" class="h">Languages by where I work</text>` + cols.map(([title, g], c) => {
-        const x = 28 + c * 276;
-        const rows = langs(g).slice(0, 6);
-        return `<text x="${x}" y="80" font-size="16" font-weight="600">${title}</text><text x="${x + 250}" y="80" class="s" text-anchor="end">${d.repos[g[0]]} repos</text>` + rows.map(([l, p], i) => { const y = 116 + i * 48;
+      return wrap(306, 'Languages across personal and organization repositories', t, `<text x="0" y="28" class="h">Languages</text>` + cols.map(([title, g], c) => {
+        const x = c * 305;
+        const rows = langs(g).slice(0, 4);
+        return `<text x="${x}" y="80" class="s">${title}</text>` + rows.map(([l, p], i) => { const y = 116 + i * 48;
           return `<text x="${x}" y="${y}" font-size="16">${l}</text><text x="${x + 250}" y="${y}" class="s" text-anchor="end">${pct(p)}</text><rect x="${x}" y="${y + 9}" width="250" height="8" rx="4" fill="${t.ramp[0]}"/><rect x="${x}" y="${y + 9}" width="${Math.max(8, p * 2.5).toFixed(1)}" height="8" rx="4" fill="${color(t, l)}" class="rt" style="animation-delay:${i * .07}s"/>`; }).join('');
       }).join(''));
     },
@@ -93,7 +84,7 @@ ${card ? `<rect x=".5" y=".5" width="${W - 1}" height="${h - 1}" rx="14" fill="$
       const sums = rows.map(r => Object.values(r).reduce((a, b) => a + b, 0)), max = Math.max(...sums, 1), names = [...LANGS, 'Other'].filter(l => rows.some(r => r[l] >= .5));
       let x = 28;
       const legend = names.map(l => { const s = `<rect x="${x}" y="58" width="11" height="11" rx="3" fill="${color(t, l)}"/><text x="${x + 17}" y="69" class="s">${l}</text>`; x += 40 + l.length * 8.2; return s; }).join('');
-      return wrap(336, 'Commits per month by language', t, `<text x="28" y="40" class="h">Commits per month, by language</text>${legend}` + rows.map((r, i) => {
+      return wrap(336, 'Commits per month by language', t, `<text x="0" y="28" class="h">Commits per month, by language</text>${legend}` + rows.map((r, i) => {
         let y = 290; const bx = 34 + i * 67.5;
         const seg = names.map(l => { const h = (r[l] ?? 0) / max * 180; if (h < 1) return ''; y -= h; return `<rect x="${bx}" y="${y.toFixed(1)}" width="44" height="${Math.max(h - 2, 1).toFixed(1)}" rx="2" fill="${color(t, l)}"/>`; }).join('');
         return `<g class="up" style="animation-delay:${i * .04}s">${seg}</g><text x="${bx + 22}" y="${(y - 7).toFixed(1)}" class="s" text-anchor="middle">${sums[i] >= .5 ? Math.round(sums[i]) : ''}</text><text x="${bx + 22}" y="314" class="s" text-anchor="middle">${new Date(monthKeys[i] + '-01T00:00Z').toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' })}</text>`;
