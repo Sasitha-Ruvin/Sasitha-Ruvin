@@ -1,0 +1,30 @@
+name: Profile stats
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # STATS_TOKEN: classic PAT with the `repo` scope. The built-in GITHUB_TOKEN
+      # cannot see private or organization repositories.
+      - run: node scripts/stats.mjs
+        env:
+          STATS_TOKEN: ${{ secrets.STATS_TOKEN }}
+          EXTRA_EMAILS: ${{ secrets.EXTRA_EMAILS }}
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets
+          git diff --cached --quiet || { git commit -m "Update profile stats"; git push; }

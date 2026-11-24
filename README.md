@@ -1,67 +1,38 @@
-<!-- Animated header -->
-<div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0f2027,50:203a43,100:2c5364&height=200&section=header&text=Sasitha%20Ruvin&fontSize=42&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=Software%20Engineer%20%7C%20Colombo%2C%20Sri%20Lanka&descAlignY=58&descSize=16" width="100%" />
-</div>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/hero-dark.svg">
+  <img src="assets/hero-light.svg" alt="Sasitha Ruvin, software engineer in Colombo, Sri Lanka" width="720">
+</picture>
 
-<!-- Typing animation -->
-<div align="center">
-  <a href="https://git.io/typing-svg">
-    <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&pause=1000&color=36BCF7&center=true&vCenter=true&width=600&lines=Full-stack+Developer;React+%2F+Next.js+%2B+NestJS+%2B+TypeScript;Building+ERP%2C+CRM+%26+POS+systems;Always+learning%2C+always+shipping" alt="Typing SVG" />
-  </a>
-</div>
+I build ERP and CRM systems, client websites and AI-powered automation, and I write firmware for machinery too. Right now I'm exploring applied AI, voice agents and scalable architectures. BSc (Hons) Computer Science.
 
-<br/>
+[Portfolio](https://sasitha-ruween.vercel.app) &nbsp;·&nbsp; [LinkedIn](https://www.linkedin.com/in/sasitha-ruween-1752502b3) &nbsp;·&nbsp; [Email](mailto:sasitharuween@gmail.com)
 
-<div align="center">
-  <img src="https://komarev.com/ghpvc/?username=Sasitha-Ruvin&label=Profile%20views&color=0e75b6&style=flat" alt="profile views" />
-  <img src="https://img.shields.io/github/followers/Sasitha-Ruvin?label=Followers&style=flat&logo=github" alt="followers" />
-</div>
+## Activity
 
----
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/activity-dark.svg">
+  <img src="assets/activity-light.svg" alt="Commit totals and commits per week over the last year" width="720">
+</picture>
 
-## 👨‍💻 About Me
+## Languages
 
-- 🔭 Building internal ERP/CRM systems, client websites, and AI-powered automation
-- 🌱 Currently exploring applied AI systems, voice agents, and scalable architectures
-- 🎓 BSc (Hons) Computer Science
-- 📍 Based in Colombo, Sri Lanka
-- ⚡ Fun fact: I write firmware for machinery too, not just web apps
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/langs-dark.svg">
+  <img src="assets/langs-light.svg" alt="Share of commits by language, last 90 days and all time" width="720">
+</picture>
 
----
+<sub>Share of my commits by language, across public and private work. Generated code excluded. [How it's counted](scripts/stats.mjs)</sub>
 
-## 🛠️ Tech Stack
+## Stack
 
-<div align="center">
-  <img src="https://skillicons.dev/icons?i=react,nextjs,ts,nodejs,nestjs,postgres,supabase,prisma,java,cs,flutter,spring,angular,aws,docker,git,figma&perline=9" alt="skills" />
-</div>
+| | |
+|---|---|
+| **Backend** | Go, NestJS, Node.js, Spring, PostgreSQL, Redis, Prisma, Supabase |
+| **Web** | TypeScript, React, Next.js, Angular, Tailwind CSS |
+| **Mobile and desktop** | Kotlin, Flutter, Java, C# |
+| **Infrastructure** | AWS, Docker, Git |
 
----
+## Open source
 
-## 📊 GitHub Stats
-
-<div align="center">
-  <img height="180" src="https://github-readme-stats.vercel.app/api?username=Sasitha-Ruvin&show_icons=true&theme=tokyonight&hide_border=true&include_all_commits=true&count_private=true" alt="stats" />
-  <img height="180" src="https://github-readme-stats.vercel.app/api/top-langs/?username=Sasitha-Ruvin&layout=compact&theme=tokyonight&hide_border=true&langs_count=8" alt="top languages" />
-</div>
-
-<div align="center">
-  <img src="https://streak-stats.demolab.com?user=Sasitha-Ruvin&theme=tokyonight&hide_border=true" alt="streak" />
-</div>
-
----
-## 📊 Profile Summary
-
-<div align="center">
-  <img src="./profile-summary-card-output/tokyonight/3-stats.svg" width="49%" />
-  <img src="./profile-summary-card-output/tokyonight/2-most-commit-language.svg" width="49%" />
-</div>
-
-## 🤝 Let's Connect
-
-<div align="center">
-  <a href="https://www.linkedin.com/in/sasitha-ruween-1752502b3"><img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white" /></a>
-  <a href="mailto:sasitharuween@gmail.com"><img src="https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white" /></a>
-  <a href="https://sasitha-ruween.vercel.app"><img src="https://img.shields.io/badge/Portfolio-000000?style=for-the-badge&logo=vercel&logoColor=white" /></a>
-</div>
-
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0f2027,50:203a43,100:2c5364&height=100&section=footer" width="100%" />
+- **[lk-holidays](https://github.com/Sasitha-Ruvin/lk-holidays)**: Sri Lankan public, bank and mercantile holidays, with working-day helpers for payroll and attendance. Zero dependencies.
+- **[student-management-system](https://github.com/Sasitha-Ruvin/student-management-system)**: students, batches, attendance and admin workflows in a web app.
